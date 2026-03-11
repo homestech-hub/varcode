@@ -171,15 +171,17 @@
             updateGlobalStats();
         });
 
-        // HÀM BỔ SUNG: Xử lý gửi Zalo chuẩn không bị lỗi trang
+        // HÀM BỔ SUNG ĐÃ SỬA: Chuyển đổi số điện thoại thành định dạng +84 (bỏ số 0 đầu)
         function sendZaloMsg(phone, customer, license, expiry) {
             let cleanPhone = phone.replace(/[^0-9]/g, '');
+            // Nếu số bắt đầu bằng 0, cắt bỏ số 0 và thêm 84. Nếu đã là 84 thì giữ nguyên.
             if (cleanPhone.startsWith('0')) {
                 cleanPhone = '84' + cleanPhone.substring(1);
             }
             const message = `Chào ${customer}, CODEVAR PRO gửi bạn thông tin bản quyền:\n- Key: ${license}\n- Hạn dùng: ${expiry}\nCảm ơn bạn đã tin dùng!`;
             const encodedMsg = encodeURIComponent(message);
-            window.open(`https://zalo.me/${cleanPhone}?text=${encodedMsg}`, '_blank');
+            // Sử dụng định dạng +84 trong URL
+            window.open(`https://zalo.me/+${cleanPhone}?text=${encodedMsg}`, '_blank');
         }
 
         function generateLicenseLocally(hwid, days) {
