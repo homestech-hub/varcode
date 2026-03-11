@@ -171,6 +171,17 @@
             updateGlobalStats();
         });
 
+        // HÀM BỔ SUNG: Xử lý gửi Zalo chuẩn không bị lỗi trang
+        function sendZaloMsg(phone, customer, license, expiry) {
+            let cleanPhone = phone.replace(/[^0-9]/g, '');
+            if (cleanPhone.startsWith('0')) {
+                cleanPhone = '84' + cleanPhone.substring(1);
+            }
+            const message = `Chào ${customer}, CODEVAR PRO gửi bạn thông tin bản quyền:\n- Key: ${license}\n- Hạn dùng: ${expiry}\nCảm ơn bạn đã tin dùng!`;
+            const encodedMsg = encodeURIComponent(message);
+            window.open(`https://zalo.me/${cleanPhone}?text=${encodedMsg}`, '_blank');
+        }
+
         function generateLicenseLocally(hwid, days) {
             const futureDate = new Date();
             futureDate.setDate(futureDate.getDate() + parseInt(days));
@@ -235,7 +246,10 @@
                             <div>
                                 <div class="cust-name">${d.customer}</div>
                                 <a href="tel:${d.phone}" class="cust-phone-link"><i data-lucide="phone" style="width:14px"></i> ${d.phone}</a>
-                                <a href="https://zalo.me/${d.phone.replace(/[^0-9]/g,'')}" target="_blank" style="font-size:0.7rem; color:#0068ff; text-decoration:none; margin-top:4px; display:inline-block; font-weight:600">Nhắn Zalo</a>
+                                <div onclick="sendZaloMsg('${d.phone}', '${d.customer}', '${d.license}', '${d.expiry}')" 
+                                     style="font-size:0.7rem; color:#0068ff; cursor:pointer; text-decoration:none; margin-top:6px; display:flex; align-items:center; gap:4px; font-weight:600">
+                                     <i data-lucide="send" style="width:12px"></i> Nhắn Zalo
+                                </div>
                             </div>
                             <span class="badge" style="${badge.s}">${badge.t}</span>
                         </div>
@@ -347,5 +361,4 @@
         }
     </script>
 </body>
-
 </html>
