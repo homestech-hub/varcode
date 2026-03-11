@@ -171,17 +171,22 @@
             updateGlobalStats();
         });
 
-        // HÀM BỔ SUNG ĐÃ SỬA: Chuyển đổi số điện thoại thành định dạng +84 (bỏ số 0 đầu)
+        // HÀM FIX LỖI "THIS PAGE DOESN'T EXIST":
+        // Ép trình duyệt thoát Webview và nhảy vào App Zalo
         function sendZaloMsg(phone, customer, license, expiry) {
             let cleanPhone = phone.replace(/[^0-9]/g, '');
-            // Nếu số bắt đầu bằng 0, cắt bỏ số 0 và thêm 84. Nếu đã là 84 thì giữ nguyên.
             if (cleanPhone.startsWith('0')) {
                 cleanPhone = '84' + cleanPhone.substring(1);
             }
-            const message = `Chào ${customer}, CODEVAR PRO gửi bạn thông tin bản quyền:\n- Key: ${license}\n- Hạn dùng: ${expiry}\nCảm ơn bạn đã tin dùng!`;
+            
+            const message = `Chào ${customer}, CODEVAR PRO gửi thông tin bản quyền:\n- Key: ${license}\n- Hạn dùng: ${expiry}`;
             const encodedMsg = encodeURIComponent(message);
-            // Sử dụng định dạng +84 trong URL
-            window.open(`https://zalo.me/+${cleanPhone}?text=${encodedMsg}`, '_blank');
+            
+            // Dùng định dạng link tuyệt đối không dấu '+' để tránh Webview hiểu lầm là URL web
+            const zaloUrl = `https://zalo.me/${cleanPhone}?text=${encodedMsg}`;
+            
+            // Kỹ thuật điều hướng cưỡng ép
+            window.location.assign(zaloUrl);
         }
 
         function generateLicenseLocally(hwid, days) {
@@ -249,8 +254,8 @@
                                 <div class="cust-name">${d.customer}</div>
                                 <a href="tel:${d.phone}" class="cust-phone-link"><i data-lucide="phone" style="width:14px"></i> ${d.phone}</a>
                                 <div onclick="sendZaloMsg('${d.phone}', '${d.customer}', '${d.license}', '${d.expiry}')" 
-                                     style="font-size:0.7rem; color:#0068ff; cursor:pointer; text-decoration:none; margin-top:6px; display:flex; align-items:center; gap:4px; font-weight:600">
-                                     <i data-lucide="send" style="width:12px"></i> Nhắn Zalo
+                                     style="font-size:0.75rem; color:#0068ff; cursor:pointer; margin-top:8px; display:flex; align-items:center; gap:4px; font-weight:700; border:1px solid #0068ff; padding:4px 8px; border-radius:6px; background:#f0f7ff">
+                                     <i data-lucide="message-circle" style="width:14px"></i> GỬI QUA ZALO
                                 </div>
                             </div>
                             <span class="badge" style="${badge.s}">${badge.t}</span>
@@ -269,8 +274,8 @@
             lucide.createIcons();
         }
 
+        // Các hàm phụ trợ giữ nguyên...
         function deleteLicense(id) { if(confirm("Xóa vĩnh viễn dữ liệu này?")) db.ref('licenses/' + id).remove(); }
-
         function editLicense(id) {
             const item = allLicenses.find(l => l._id === id);
             document.getElementById('editId').value = id;
@@ -285,7 +290,6 @@
             showPage('dash');
             window.scrollTo({top: 0, behavior: 'smooth'});
         }
-
         function resetForm() {
             document.getElementById('editId').value = "";
             ['custName', 'custPhone', 'priceInput', 'hwidInput'].forEach(i => document.getElementById(i).value = "");
@@ -293,7 +297,6 @@
             document.getElementById('btnSubmit').innerText = "XÁC NHẬN TẠO KEY";
             document.getElementById('btnCancel').style.display = "none";
         }
-
         function showPage(page, el) {
             document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + page).classList.add('active');
@@ -303,27 +306,22 @@
             if(page === 'reports') updateCharts();
             lucide.createIcons();
         }
-
         function updateGlobalStats() {
             const rev = allLicenses.reduce((s, i) => s + (Number(i.price) || 0), 0);
             document.getElementById('totalRevenue').innerText = rev.toLocaleString() + 'đ';
             document.getElementById('totalKeys').innerText = allLicenses.length;
         }
-
         function filterTable() {
             const q = document.getElementById('searchInput').value.toLowerCase();
             const filtered = allLicenses.filter(i => i.customer.toLowerCase().includes(q) || i.phone.includes(q));
             renderCustomerCards(filtered);
         }
-
         function copyText(t) { navigator.clipboard.writeText(t); alert("Đã sao chép vào bộ nhớ tạm!"); }
         function copyResult() { copyText(document.getElementById('lastGeneratedKey').value); }
-
         function updateCharts() {
             const today = new Date();
             let expSoon = 0, active = 0, expired = 0;
             const monthlyRev = {};
-
             allLicenses.forEach(d => {
                 const expDate = new Date(d.expiry.split('/').reverse().join('-'));
                 const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
@@ -333,9 +331,7 @@
                     monthlyRev[label] = (monthlyRev[label] || 0) + (Number(d.price) || 0);
                 }
             });
-
             document.getElementById('expiringSoonCount').innerText = expSoon;
-
             if(statusChart) statusChart.destroy();
             statusChart = new Chart(document.getElementById('statusChart'), {
                 type: 'doughnut',
@@ -345,12 +341,10 @@
                 },
                 options: { plugins: { legend: { position: 'bottom' } } }
             });
-
             const labels = Object.keys(monthlyRev).sort((a, b) => {
                 const [m1, y1] = a.split('/').map(Number), [m2, y2] = b.split('/').map(Number);
                 return y1 !== y2 ? y1 - y2 : m1 - m2;
             });
-
             if(revenueChart) revenueChart.destroy();
             revenueChart = new Chart(document.getElementById('revenueChart'), {
                 type: 'bar',
