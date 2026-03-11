@@ -8,10 +8,11 @@
   "theme_color": "#3b82f6",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/1055/1055683.png",
+      "src": "https://cameradalat.com/wp-content/uploads/2026/03/var-logo-app.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ]
+
 }
